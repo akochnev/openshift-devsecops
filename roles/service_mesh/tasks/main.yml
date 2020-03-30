@@ -59,6 +59,8 @@
             enabled: true
             jaeger:
               template: all-in-one
+          mtls:
+            enabled: true
   register: control_plane_deployment
   until: not control_plane_deployment.failed
   retries: 5
