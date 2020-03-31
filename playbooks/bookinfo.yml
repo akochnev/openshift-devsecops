@@ -18,6 +18,7 @@
       when: devsecops_included is not defined or not devsecops_included
 
   roles:
+    - role: cluster-adjuster
     - role: ocs
     - role: 3scale
     - role: service_mesh
