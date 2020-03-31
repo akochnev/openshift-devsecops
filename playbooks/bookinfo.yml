@@ -1,0 +1,87 @@
+---
+- hosts: localhost
+  pre_tasks:
+    - name: Look for default defined common variables
+      include_vars: ../vars/common.yml
+      when: common_included is not defined or not common_included
+
+    - fail:
+        msg: Unable to continue without common variables set
+      when: common_included is not defined or not common_included
+
+    - name: Look for default defined devsecops variables
+      include_vars: ../vars/devsecops.yml
+      when: devsecops_included is not defined or not devsecops_included
+
+    - fail:
+        msg: Unable to continue without devsecops variables set
+      when: devsecops_included is not defined or not devsecops_included
+
+  roles:
+    - role: ocs
+    - role: 3scale
+    - role: service_mesh
+  tasks:
+    - name: Create bookinfo Project
+      k8s:
+        kubeconfig: '{{ kubeconfig }}'
+        definition:
+          - apiVersion: project.openshift.io/v1
+            kind: Project
+            metadata:
+              name: bookinfo
+              labels:
+                name: bookinfo
+              annotations:
+                openshift.io/display-name: 'BookInfo Service Mesh Application'
+
+    - name: Add bookinfo to ServiceMeshMemberRoll
+      k8s:
+        kubeconfig: '{{ kubeconfig }}'
+        definition:
+          - apiVersion: maistra.io/v1
+            kind: ServiceMeshMemberRoll
+            metadata:
+              name: default
+              namespace: istio-system
+            spec:
+              members:
+              - bookinfo
+
+    - name: Create bookinfo application
+      k8s:
+        kubeconfig: '{{ kubeconfig }}'
+        namespace: bookinfo
+        definition: '{{ lookup("url", bookinfo.url, split_lines=False) }}'
+      loop:
+        - name: application
+          url: https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
+        - name: ingress gateway
+          url: https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
+        - name: mTLS destination rules
+          url: https://raw.githubusercontent.com/istio/istio/release-1.1/samples/bookinfo/networking/destination-rule-all-mtls.yaml
+      loop_control:
+        loop_var: bookinfo
+        label: '{{ bookinfo.name }}'
+
+    - name: Identify bookinfo route (from Istio Ingress)
+      k8s_info:
+        kubeconfig: '{{ kubeconfig }}'
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: istio-system
+        name: istio-ingressgateway
+      register: istio_ingress_gateway
+      until: istio_ingress_gateway.resources|length > 0
+      retries: 10
+      delay: 30
+
+    - name: Wait for bookinfo to begin answering requests
+      uri:
+        url: 'http://{{ istio_ingress_gateway|json_query("resources[0].spec.host") }}/productpage'
+        return_content: yes
+        validate_certs: no
+      register: bookinfo_index
+      until: '"DOCTYPE html" in bookinfo_index.content'
+      retries: 10
+      delay: 30
