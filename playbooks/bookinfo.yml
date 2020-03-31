@@ -26,26 +26,26 @@
       k8s:
         kubeconfig: '{{ kubeconfig }}'
         definition:
-          - apiVersion: project.openshift.io/v1
-            kind: Project
-            metadata:
+          apiVersion: project.openshift.io/v1
+          kind: Project
+          metadata:
+            name: bookinfo
+            labels:
               name: bookinfo
-              labels:
-                name: bookinfo
-              annotations:
-                openshift.io/display-name: 'BookInfo Service Mesh Application'
+            annotations:
+              openshift.io/display-name: 'BookInfo Service Mesh Application'
 
     - name: Add bookinfo to ServiceMeshMemberRoll
       k8s:
         kubeconfig: '{{ kubeconfig }}'
         definition:
-          - apiVersion: maistra.io/v1
-            kind: ServiceMeshMemberRoll
-            metadata:
-              name: default
-              namespace: istio-system
-            spec:
-              members:
+          apiVersion: maistra.io/v1
+          kind: ServiceMeshMemberRoll
+          metadata:
+            name: default
+            namespace: istio-system
+          spec:
+            members:
               - bookinfo
 
     - name: Create bookinfo application
