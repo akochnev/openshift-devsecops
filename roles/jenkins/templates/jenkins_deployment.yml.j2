@@ -4,7 +4,7 @@
   metadata:
     annotations:
       jenkins.io/openshift-mode: 'true'
-      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"user1-jenkins"}}'
+      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"jenkins-{{ username }}-jenkins"}}'
     generation: 1
     name: {{ username }}-jenkins
     namespace: {{ username }}-cicd
@@ -137,5 +137,5 @@
     name: jenkins-operator-{{ username }}-jenkins
     namespace: '{{ username }}-cicd'
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"{{ username }}-jenkins-{{ username }}-cicd"}}'
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"jenkins-{{ username }}-jenkins"}}'
 {% endfor %}

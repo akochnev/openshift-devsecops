@@ -13,6 +13,8 @@
     tasks:
       - name: build-app
         params:
+          - name: PATH_CONTEXT
+            value: "."
           - name: TLSVERIFY
             value: 'false'
         taskRef:
